@@ -1,0 +1,49 @@
+name: Build and Deploy to EC2
+
+on:
+  workflow_run:
+    workflows: ["Go Matrix"]
+    types:
+      - completed
+    branches:
+      - main
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check Out Repo
+        uses: actions/checkout@v2
+
+      - name: Log in to Docker Hub
+        uses: docker/login-action@v1
+        with:
+          username: ${{ secrets.DOCKER_USERNAME }}
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      - name: Build and push Docker image
+        run: |
+          docker build -t ugwuezev/chillipharm-whoami:latest .
+          docker push ugwuezev/chillipharm-whoami:latest
+
+  deploy-to-ec2:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@master
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          script: |
+            # Pull the latest Docker image
+            docker pull ugwuezev/chillipharm-whoami:latest
+
+            # Stop and remove the previous container if exists
+            docker stop myapp || true
+            docker rm myapp || true
+
+            # Run the new Docker container
+            docker run -d --name myapp -p 80:80 ugwuezev/chillipharm-whoami:latest
+          
