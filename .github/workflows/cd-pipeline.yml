@@ -38,12 +38,12 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           script: |
             # Pull the latest Docker image
-            docker pull ugwuezev/chillipharm-whoami:latest
+            sudo docker pull ugwuezev/chillipharm-whoami:latest
 
             # Stop and remove the previous container if exists
-            docker stop myapp || true
-            docker rm myapp || true
+            sudo docker stop myapp || true
+            sudo docker rm myapp || true
 
             # Run the new Docker container
-            docker run -d --name myapp -p 80:80 ugwuezev/chillipharm-whoami:latest
+            sudo docker run -d --name myapp -p 80:80 ugwuezev/chillipharm-whoami:latest
           
